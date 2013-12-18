@@ -5,8 +5,7 @@
 #include <ngx_thread.h>
 #include <ngx_regex.h>
 
-#include "uthash.h" //hashmap
-
+#include "uthash.h"
 
 static ngx_int_t ngx_http_footer_filter_init(ngx_conf_t *cf);
 
@@ -21,8 +20,8 @@ static ngx_http_module_t  ngx_http_footer_filter_module_ctx = {
     NULL,                               /* create server configuration */
     NULL,                               /* merge server configuration */
 
-    NULL,    /* create location configuration */
-    NULL      /* merge location configuration */
+    NULL,    				/* create location configuration */
+    NULL      				/* merge location configuration */
 };
 
 
@@ -44,10 +43,10 @@ ngx_module_t  ngx_http_footer_filter_module = {
 
 /* session mapping hash struct */
 typedef struct {
-    u_char* id;                    /* key */
-    int selected_peer;
-    time_t reg_time;
-    UT_hash_handle hh;         /* makes this structure hashable */
+    u_char* 			  id;               /* key */
+    int                           selected_peer;
+    time_t                        reg_time;
+    UT_hash_handle                hh;         /* makes this structure hashable */
 } session_map;
 
 typedef struct {
@@ -73,7 +72,7 @@ void add_mapping(u_char *tmp_id, size_t len, int selected_peer, time_t reg_time,
     session_map *s, *map = *map_ptr;
     u_char* mapping_id = (u_char*)malloc(sizeof(u_char) * len + 1);
     *(ngx_copy(mapping_id, tmp_id, len)) = 0;
-    HASH_FIND(hh, map, mapping_id, len, s);  // dont add again
+    HASH_FIND(hh, map, mapping_id, len, s);  /* dont add again */
     if (s==NULL) {
         s = (session_map*)malloc(sizeof(session_map));
         s->id = mapping_id;
@@ -91,7 +90,7 @@ static ngx_int_t
 ngx_http_footer_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
 {
 
-    if(ngx_http_sticky_module.ctx == NULL) { //sticky no defined
+    if(ngx_http_sticky_module.ctx == NULL) { /*sticky no defined*/
         ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,"Sticky module not there");
         return ngx_http_next_body_filter(r, in);
     }
@@ -105,10 +104,10 @@ ngx_http_footer_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
 
     ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,"ctx_domain_name : %V", ctx->domain);
 
-    //do clean up if necc
+    /*do clean up if necc*/
     time_t now = ngx_time();
     time_t expiry_limit = ctx->expiry_limit;
-    if((now - *(ctx->last_cleaned)) > expiry_limit) { //do clean up
+    if((now - *(ctx->last_cleaned)) > expiry_limit) { /*do clean up*/
         session_map *mapping = NULL;
         session_map *temp_mapping = NULL;
         for(mapping = map; mapping != NULL; ) {
@@ -122,9 +121,6 @@ ngx_http_footer_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         }
         *(ctx->last_cleaned) = now;
     }
-
-    //do parsing here. in->buf->pos to in->buf->last is the resp. #####check if buf can hav max. its 4096 nw##############
-
     ngx_str_t s  = { (ngx_uint_t)(in->buf->last - in->buf->pos), in->buf->pos};
 
     ngx_regex_compile_t   rc;
@@ -139,7 +135,6 @@ ngx_http_footer_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
     rc.options = NGX_REGEX_CASELESS;
     int n = 6;
     int capture_array[6]= {0};
-    //ngx_regex_t* re;
 
     if (ngx_regex_compile(&rc) != NGX_OK) {
         ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "regex compiling failed");
@@ -148,14 +143,14 @@ ngx_http_footer_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
 
     ngx_int_t res = ngx_regex_exec(rc.regex, &s, capture_array, n);
     ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,"regex stuff : %d : %d : %d : %d", res, capture_array[0], capture_array[1], capture_array[2]);
-    if(res == 0) { //form action is there
+    if(res == 0) { /*form action is there*/
         int i=0;
         for(i=0; i<n; ++i) {
             ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,"%d elem : %d",i, capture_array[i]);
         }
         ngx_str_t url = {capture_array[3] - capture_array[2] + 1,  in->buf->pos + capture_array[2]};//including one extra char to incl the quote fr nxt reg ex match
         ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,"regex stuff : ##%V##", &url );
-        ngx_str_set(&(rc.pattern), "[^?;]+[?;](.*)([\"'])");//';' could serve as a delimiter as well as indicates the beginning of query param.
+        ngx_str_set(&(rc.pattern), "[^?;]+[?;](.*)([\"'])");/*';' could serve as a delimiter as well as indicates the beginning of query param.*/
         if (ngx_regex_compile(&rc) != NGX_OK) {
             ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "regex compiling failed");
             return ngx_http_next_body_filter(r, in);
@@ -194,7 +189,7 @@ ngx_http_footer_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,"[filter/regex]regex stuff : Did not match" );
     }
 
-    //end parsing
+    /*end parsing*/
 
     *(ctx->map) = map;
     session_map *mapping;

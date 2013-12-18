@@ -2,16 +2,16 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-#include "uthash.h" //hash map
+#include "uthash.h"
 
 #define MAX_PTR_STR 50
 
 /* session mapping hash struct */
 typedef struct {
-    u_char* id;                    /* key */
-    int selected_peer;
-    time_t reg_time;
-    UT_hash_handle hh;         /* makes this structure hashable */
+    u_char*                       id;                    /* key */
+    int                           selected_peer;
+    time_t                        reg_time;
+    UT_hash_handle                hh;         /* makes this structure hashable */
 } session_map;
 
 
@@ -77,8 +77,8 @@ static ngx_http_module_t  ngx_http_sticky_module_ctx = {
 
 ngx_module_t  ngx_http_sticky_module = {
     NGX_MODULE_V1,
-    &ngx_http_sticky_module_ctx, /* module context */
-    ngx_http_sticky_commands,    /* module directives */
+    &ngx_http_sticky_module_ctx,           /* module context */
+    ngx_http_sticky_commands,              /* module directives */
     NGX_HTTP_MODULE,                       /* module type */
     NULL,                                  /* init master */
     NULL,                                  /* init module */
@@ -163,10 +163,10 @@ static ngx_int_t ngx_http_init_sticky_peer(ngx_http_request_t *r, ngx_http_upstr
     iphp->sticky_conf = ngx_http_conf_upstream_srv_conf(us, ngx_http_sticky_module);
     iphp->request = r;
 
-    //parsing url
+    /*parsing url*/
     u_char* id = NULL;
     u_int len = 0;
-    u_char* uri_str = (u_char*)ngx_palloc(r->pool, (r->uri).len + 2);//one fr " and \0 char
+    u_char* uri_str = (u_char*)ngx_palloc(r->pool, (r->uri).len + 2);/*one fr " and \0 char*/
     u_char* tmp = ngx_copy(uri_str, (r->uri).data, (r->uri).len);
     *(tmp++) = '"';
     *tmp = 0;
@@ -180,7 +180,7 @@ static ngx_int_t ngx_http_init_sticky_peer(ngx_http_request_t *r, ngx_http_upstr
     rc.options = NGX_REGEX_CASELESS;
     int n = 6;
     int capture_array[6]= {0};
-    ngx_str_set(&(rc.pattern), "[^?;]+[?;](.*)([\"'])");//';' could serve as a delimiter as well as indicates the beginning of query param.
+    ngx_str_set(&(rc.pattern), "[^?;]+[?;](.*)([\"'])");/*';' could serve as a delimiter as well as indicates the beginning of query param.*/
     ngx_str_t tmp_url = {(r->uri).len + 1, uri_str};
     ngx_regex_compile(&rc);
     ngx_int_t res = ngx_regex_exec(rc.regex, &tmp_url, capture_array, n);
@@ -212,14 +212,14 @@ static ngx_int_t ngx_http_init_sticky_peer(ngx_http_request_t *r, ngx_http_upstr
         ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,"[sticky/init_sticky_peer]no query param");
         return NGX_OK;
     }
-    //end of parsing url
+    /*end of parsing url*/
 
-    //1st see if session id is there in url. if yes loop up in hahs table. if found set selec peer and return ngxok. else return ngxok bt log it
+    /*1st see if session id is there in url. if yes loop up in hahs table. if found set selec peer and return ngxok. else return ngxok bt log it*/
 
     session_map *mapping = NULL;
 
     HASH_FIND(hh, iphp->sticky_conf->map, id, len, mapping);
-    if(mapping != NULL) { //found a session mapping
+    if(mapping != NULL) { /*found a session mapping*/
         iphp->selected_peer = mapping->selected_peer;
         ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "[sticky/init_sticky_peer] selecting peer %d\n", mapping->selected_peer);
     } else {
@@ -230,7 +230,7 @@ static ngx_int_t ngx_http_init_sticky_peer(ngx_http_request_t *r, ngx_http_upstr
         */
     }
     return NGX_OK;
-    //end of session based code
+    /*end of session based code*/
 
 }
 
@@ -309,7 +309,7 @@ static ngx_int_t ngx_http_get_sticky_peer(ngx_peer_connection_t *pc, void *data)
 
 
 
-    //setting up per request ctx going to be used by filter
+    /*setting up per request ctx going to be used by filter*/
     ngx_http_sticky_ctx *ctx = ngx_pcalloc(iphp->request->pool, sizeof(ngx_http_sticky_ctx));
     ngx_http_set_ctx(iphp->request, ctx, ngx_http_sticky_module);
     ctx->domain = &(conf->domain);
@@ -393,7 +393,7 @@ static char *ngx_http_sticky_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
             /* save what's after "name=" */
             u_char* temp;
-            name.len = value[i].len - ngx_strlen("name=") + 2;//for = and null char
+            name.len = value[i].len - ngx_strlen("name=") + 2;/*for = and null char*/
             temp = (u_char *)(value[i].data + sizeof("name=") - 1);
             name.data = ngx_pcalloc(cf->pool, name.len);
             temp = ngx_copy(name.data, temp, name.len - 2);
@@ -454,7 +454,7 @@ static char *ngx_http_sticky_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     /* save the sticky parameters */
     sticky_conf = ngx_http_conf_get_module_srv_conf(cf, ngx_http_sticky_module);
     sticky_conf->domain = domain;
-    sticky_conf->name = name;//store it with = and end it with 0. so 2 more bytes
+    sticky_conf->name = name;/*store it with = and end it with 0. so 2 more bytes*/
     sticky_conf->expiry_limit = expires;
     sticky_conf->no_fallback = no_fallback;
     sticky_conf->map = NULL;
