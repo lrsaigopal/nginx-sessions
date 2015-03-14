@@ -17,31 +17,30 @@ When there is no mapping or if the url does not have session id, it uses classic
 *Note : New mappings are created and added into the map only from the response html's form action url.*
 
 
-#summary Installation and usage of this module
+== summary Installation and usage of this module ==
 
-= Installation =
+=== Installation ===
 
 The load balancer and filter modules has to be compiled into nginx as every other nginx modules:
 
-{{{
+<code>
 ./configure ... --add-module=path/to/sticky --add-module=path/to/lbfilter
 make && make install
-}}}
+</code>
 
-= Usage =
+=== Usage ===
 
 Once installed, the load balancer can be used on an upstream block using the session_sticky directive in the upstream block of Nginx configuration file.
 
 Eg:
-{{{
+<code>
 upstream backend {
         session_sticky name=jsessionid expires=2h;
         server localhost:8080;
         server localhost:8081;
     }
-}}}
-
-= Syntax = 
+</code>
+=== Syntax ===
 
 The session_sticky directive/command takes 3 parameters to configure the behavior of the load balancing module.
 
@@ -49,6 +48,6 @@ The session_sticky directive/command takes 3 parameters to configure the behavio
   # expires : the amount of time after which the session expires and selecting the backend server for that session id is not required anymore.
   # no_fallback : When this flag is set, nginx will return a 502 (Bad Gateway orProxy Error) if a request comes with a session id and the corresponding mapped backend is unavailable.
 
-{{{
+<code>
 session_sticky [name=jsessionid] [expires=1h] [no_fallback];
-}}}
+</code>
